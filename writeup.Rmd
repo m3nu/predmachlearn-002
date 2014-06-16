@@ -1,0 +1,47 @@
+HAR machine learning assignment
+===
+
+Step 1: Load data
+---
+
+```{r}
+library(caret)
+pml.testing <- read.csv('pml-testing.csv')
+pml.training <- read.csv('pml-training.csv')
+```
+
+Step 2: Pick relevant column names
+---
+This drops all the cols that are mostly NA or empty. We also skip the administrative stuff in cols 1 to 7.
+
+```{r}
+f<-pml.testing[,colSums(is.na(pml.testing)) < nrow(pml.testing)*.6]
+p <- colnames(f[8:59])
+p
+```
+
+Step 3: Split in training- and testset.
+---
+
+```{r}
+df = pml.training[c(p, 'classe')]
+inTrain <- createDataPartition(y=df$classe, p=.75, list=F)
+df.train <- df[inTrain, ]
+df.test <- df[-inTrain, ]
+```
+
+Step 4: Train algorithm
+---
+QDA gave the best results, compared to LDA. The problem seems to be non-linear. Running the model on the test set gives almost the same accuracy as in the training set (cross-validation). The expected out-of-sample error is about 10%.
+
+```{r}
+model <- train(df.train$classe ~ ., meth='qda', data=df.train)
+confusionMatrix(df.test$classe, predict(model, df.test))
+```
+
+Step 5: Solution
+---
+
+```{r}
+predict(model, pml.testing[p])
+```
